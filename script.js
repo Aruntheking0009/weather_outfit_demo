@@ -7,6 +7,14 @@ document.getElementById("getWeather").addEventListener("click", function () {
     fetchWeather(city);
 });
 
+document.getElementById("geoBtn").addEventListener("click", () => {
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(position=>{
+            fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+        });
+    } else alert("Geolocation not supported");
+});
+
 async function fetchWeather(city) {
     const apiKey = "7b0eb6123284d815d1e046643e08aec7"; 
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
@@ -24,12 +32,30 @@ async function fetchWeather(city) {
     }
 }
 
+async function fetchWeatherByCoords(lat, lon){
+    const apiKey = "7b0eb6123284d815d1e046643e08aec7"; 
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+    try{
+        const response = await fetch(url);
+        if(!response.ok) throw new Error("Unable to fetch location weather");
+        const data = await response.json();
+        displayWeather(data);
+        suggestOutfit(data.main.temp, data.weather[0].main);
+    }catch(err){
+        alert(err.message);
+    }
+}
+
 function displayWeather(data) {
     document.getElementById("weatherResult").innerHTML = `
         🌍 Location: ${data.name}, ${data.sys.country} <br>
         🌡️ Temperature: ${data.main.temp}°C <br>
-        🌤️ Weather: ${data.weather[0].main}
+        🌤️ Weather: ${data.weather[0].main} <br>
+        💧 Humidity: ${data.main.humidity}% | 🌬️ Wind: ${data.wind.speed} m/s
     `;
+    document.getElementById("weatherResult").classList.add("show");
+    setDynamicBackground(data.weather[0].main);
 }
 
 function suggestOutfit(temp, weatherCondition) {
@@ -52,9 +78,10 @@ function suggestOutfit(temp, weatherCondition) {
     }
 
     document.getElementById("outfitSuggestion").innerText = suggestion;
+    document.getElementById("outfitSuggestion").classList.add("show");
 }
 
-// Dynamic background based on weather
+// Background changes based on weather
 function setDynamicBackground(condition) {
     switch(condition.toLowerCase()) {
         case 'clear':
@@ -67,7 +94,7 @@ function setDynamicBackground(condition) {
         case 'drizzle':
         case 'thunderstorm':
             document.body.style.background = 'linear-gradient(to right, #4e54c8, #8f94fb)';
-            createRain(); // optional animation
+            createRain();
             break;
         case 'snow':
             document.body.style.background = 'linear-gradient(to right, #e6dada, #274046)';
@@ -78,10 +105,7 @@ function setDynamicBackground(condition) {
     }
 }
 
-// Call inside suggestOutfit to set background dynamically
-setDynamicBackground(weatherCondition);
-
-// Optional: Create snow animation
+// Snow animation
 function createSnow(){
     for(let i=0;i<30;i++){
         const snow = document.createElement('div');
@@ -95,7 +119,7 @@ function createSnow(){
     }
 }
 
-// Optional: Create rain animation
+// Rain animation
 function createRain(){
     for(let i=0;i<30;i++){
         const rain = document.createElement('div');
@@ -106,42 +130,5 @@ function createRain(){
         rain.innerText = '💧';
         document.body.appendChild(rain);
         setTimeout(()=>rain.remove(), 3000);
-    }
-}
-
-// Add fade-in for results
-const weatherRes = document.getElementById("weatherResult");
-const outfitRes = document.getElementById("outfitSuggestion");
-
-weatherRes.classList.add("show");
-outfitRes.classList.add("show");
-
-// Optional: Geolocation button
-const geoBtn = document.createElement("button");
-geoBtn.innerText = "Use My Location";
-geoBtn.id = "geoBtn";
-document.querySelector(".weather-section").appendChild(geoBtn);
-
-geoBtn.addEventListener("click", ()=>{
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(position=>{
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            fetchWeatherByCoords(lat, lon);
-        });
-    } else alert("Geolocation not supported");
-});
-
-async function fetchWeatherByCoords(lat, lon){
-    const apiKey = "7b0eb6123284d815d1e046643e08aec7";
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
-    try{
-        const response = await fetch(url);
-        if(!response.ok) throw new Error("Unable to fetch location weather");
-        const data = await response.json();
-        displayWeather(data);
-        suggestOutfit(data.main.temp, data.weather[0].main);
-    }catch(err){
-        alert(err.message);
     }
 }
