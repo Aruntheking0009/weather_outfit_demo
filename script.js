@@ -53,3 +53,95 @@ function suggestOutfit(temp, weatherCondition) {
 
     document.getElementById("outfitSuggestion").innerText = suggestion;
 }
+
+// Dynamic background based on weather
+function setDynamicBackground(condition) {
+    switch(condition.toLowerCase()) {
+        case 'clear':
+            document.body.style.background = 'linear-gradient(to right, #fddb92, #d1fdff)';
+            break;
+        case 'clouds':
+            document.body.style.background = 'linear-gradient(to right, #d7d2cc, #304352)';
+            break;
+        case 'rain':
+        case 'drizzle':
+        case 'thunderstorm':
+            document.body.style.background = 'linear-gradient(to right, #4e54c8, #8f94fb)';
+            createRain(); // optional animation
+            break;
+        case 'snow':
+            document.body.style.background = 'linear-gradient(to right, #e6dada, #274046)';
+            createSnow();
+            break;
+        default:
+            document.body.style.background = 'linear-gradient(to right, #83a4d4, #b6fbff)';
+    }
+}
+
+// Call inside suggestOutfit to set background dynamically
+setDynamicBackground(weatherCondition);
+
+// Optional: Create snow animation
+function createSnow(){
+    for(let i=0;i<30;i++){
+        const snow = document.createElement('div');
+        snow.classList.add('snowflake');
+        snow.style.left = Math.random()*100 + 'vw';
+        snow.style.animationDuration = (3+Math.random()*5)+'s';
+        snow.style.fontSize = (10+Math.random()*20)+'px';
+        snow.innerText = '❄';
+        document.body.appendChild(snow);
+        setTimeout(()=>snow.remove(), 8000);
+    }
+}
+
+// Optional: Create rain animation
+function createRain(){
+    for(let i=0;i<30;i++){
+        const rain = document.createElement('div');
+        rain.classList.add('snowflake');
+        rain.style.left = Math.random()*100 + 'vw';
+        rain.style.animationDuration = (1+Math.random()*2)+'s';
+        rain.style.fontSize = '10px';
+        rain.innerText = '💧';
+        document.body.appendChild(rain);
+        setTimeout(()=>rain.remove(), 3000);
+    }
+}
+
+// Add fade-in for results
+const weatherRes = document.getElementById("weatherResult");
+const outfitRes = document.getElementById("outfitSuggestion");
+
+weatherRes.classList.add("show");
+outfitRes.classList.add("show");
+
+// Optional: Geolocation button
+const geoBtn = document.createElement("button");
+geoBtn.innerText = "Use My Location";
+geoBtn.id = "geoBtn";
+document.querySelector(".weather-section").appendChild(geoBtn);
+
+geoBtn.addEventListener("click", ()=>{
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(position=>{
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            fetchWeatherByCoords(lat, lon);
+        });
+    } else alert("Geolocation not supported");
+});
+
+async function fetchWeatherByCoords(lat, lon){
+    const apiKey = "7b0eb6123284d815d1e046643e08aec7";
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+    try{
+        const response = await fetch(url);
+        if(!response.ok) throw new Error("Unable to fetch location weather");
+        const data = await response.json();
+        displayWeather(data);
+        suggestOutfit(data.main.temp, data.weather[0].main);
+    }catch(err){
+        alert(err.message);
+    }
+}
