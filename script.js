@@ -1,55 +1,55 @@
-const apiKey = "YOUR_API_KEY"; // Replace with your OpenWeatherMap API key
-
-// Outfit mapping
-const outfitSuggestions = {
-    Clear: { text: "T-shirt, Sunglasses, Shorts", img: "https://i.imgur.com/HtKqJkO.png" },
-    Clouds: { text: "Light Jacket, Jeans, Sneakers", img: "https://i.imgur.com/7kWgGdK.png" },
-    Rain: { text: "Raincoat, Waterproof Boots, Umbrella", img: "https://i.imgur.com/8fswQjq.png" },
-    Snow: { text: "Winter Coat, Gloves, Boots", img: "https://i.imgur.com/nH5aP4K.png" },
-    Drizzle: { text: "Waterproof Jacket, Cap", img: "https://i.imgur.com/8fswQjq.png" },
-    Thunderstorm: { text: "Rain Jacket, Boots, Stay Safe Indoors!", img: "https://i.imgur.com/mG8V7Xm.png" },
-    Default: { text: "Comfortable Clothes", img: "https://i.imgur.com/udtH7uF.png" }
-};
-
-document.getElementById("getWeatherBtn").addEventListener("click", () => {
-    const city = document.getElementById("cityInput").value.trim();
-    if (city) {
-        getWeather(city);
-    } else {
+document.getElementById("getWeather").addEventListener("click", function () {
+    const city = document.getElementById("city").value.trim();
+    if (!city) {
         alert("Please enter a city name");
+        return;
     }
+    fetchWeather(city);
 });
 
-async function getWeather(city) {
+async function fetchWeather(city) {
+    const apiKey = "7b0eb6123284d815d1e046643e08aec7"; 
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
     try {
-        const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
-        );
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("City not found");
         const data = await response.json();
 
-        if (data.cod === "404") {
-            document.getElementById("weatherResult").innerHTML = `<p>City not found!</p>`;
-            return;
-        }
-
-        const weatherCondition = data.weather[0].main;
-        const temp = Math.round(data.main.temp);
-        const cityName = data.name;
-        const icon = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-
-        const outfit = outfitSuggestions[weatherCondition] || outfitSuggestions.Default;
-
-        document.getElementById("weatherResult").innerHTML = `
-            <h2>${cityName}</h2>
-            <img src="${icon}" alt="${weatherCondition}">
-            <p><strong>Condition:</strong> ${weatherCondition}</p>
-            <p><strong>Temperature:</strong> ${temp}°C</p>
-            <h3>Suggested Outfit</h3>
-            <p>${outfit.text}</p>
-            <img src="${outfit.img}" alt="Outfit Suggestion">
-        `;
+        displayWeather(data);
+        suggestOutfit(data.main.temp, data.weather[0].main);
     } catch (error) {
-        console.error(error);
-        document.getElementById("weatherResult").innerHTML = `<p>Something went wrong!</p>`;
+        document.getElementById("weatherResult").innerText = error.message;
+        document.getElementById("outfitSuggestion").innerText = "";
     }
+}
+
+function displayWeather(data) {
+    document.getElementById("weatherResult").innerHTML = `
+        🌍 Location: ${data.name}, ${data.sys.country} <br>
+        🌡️ Temperature: ${data.main.temp}°C <br>
+        🌤️ Weather: ${data.weather[0].main}
+    `;
+}
+
+function suggestOutfit(temp, weatherCondition) {
+    let suggestion = "";
+
+    if (temp < 10) {
+        suggestion = "🧥 It's cold! Wear a warm coat, scarf, and gloves.";
+    } else if (temp >= 10 && temp < 20) {
+        suggestion = "🧶 Cool weather. A sweater or light jacket will be perfect.";
+    } else if (temp >= 20 && temp < 30) {
+        suggestion = "👕 Warm day! T-shirt and jeans or shorts will do.";
+    } else {
+        suggestion = "🩳 It's hot! Wear light clothing and stay hydrated.";
+    }
+
+    if (weatherCondition.toLowerCase().includes("rain")) {
+        suggestion += " ☔ Don't forget an umbrella!";
+    } else if (weatherCondition.toLowerCase().includes("snow")) {
+        suggestion += " ❄️ Wear snow boots and warm layers!";
+    }
+
+    document.getElementById("outfitSuggestion").innerText = suggestion;
 }
