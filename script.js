@@ -15,6 +15,7 @@ document.getElementById("geoBtn").addEventListener("click", () => {
     } else alert("Geolocation not supported");
 });
 
+// Documentation followed: https://openweathermap.org/current
 async function fetchWeather(city) {
     const apiKey = "7b0eb6123284d815d1e046643e08aec7"; 
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
